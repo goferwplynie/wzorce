@@ -1,6 +1,6 @@
 use crate::model::StatisticsLogger;
 
-fn with_mean_statistics_logger<F: Fn(&dyn StatisticsLogger)>(f:F) -> impl Fn(&dyn StatisticsLogger){
+pub fn with_mean_statistics_logger<F: Fn(&dyn StatisticsLogger)>(f:F) -> impl Fn(&dyn StatisticsLogger){
     move |logger: &dyn StatisticsLogger|{
         let avg: f64;
         let stats = logger.get_execution_times();
@@ -16,7 +16,7 @@ fn with_mean_statistics_logger<F: Fn(&dyn StatisticsLogger)>(f:F) -> impl Fn(&dy
     }
 }
 
-fn with_summary_statistics_logger<F: Fn(&dyn StatisticsLogger)>(f:F) -> impl Fn(&dyn StatisticsLogger){
+pub fn with_summary_statistics_logger<F: Fn(&dyn StatisticsLogger)>(f:F) -> impl Fn(&dyn StatisticsLogger){
     move |logger: &dyn StatisticsLogger|{
         let stats = logger.get_execution_times();
         let sum : f64 = stats.iter().sum();
