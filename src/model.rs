@@ -15,6 +15,7 @@ impl ExecutionTimesBaseStatistics {
 
 impl StatisticsLogger for ExecutionTimesBaseStatistics {
     fn display_statistics(&self) {
+        println!("----Execution times base statistics----");
         println!("{:#?}", self.execution_times)
     }
 
