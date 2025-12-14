@@ -22,7 +22,7 @@ impl<T: StatisticsLogger> StatisticsLogger for WithMeanStatisticsLogger<T> {
         writeln!(writer, "----Mean Statistics----")?;
         if stats.len() > 0 {
             avg = sum / stats.len() as f64;
-            writeln!(writer,"avg: {}", avg)?;
+            writeln!(writer,"avg: {:.2}", avg)?;
         }
 
         self.inner.display_statistics(writer)?;
@@ -55,9 +55,9 @@ impl<T: StatisticsLogger> StatisticsLogger for WithSummaryStatisticsLogger<T> {
 
         writeln!(writer, "----Summary Statistics----")?;
         writeln!(writer, "records: {}", stats.len())?;
-        writeln!(writer, "sum: {}", sum)?;
-        writeln!(writer,"min: {}", min)?;
-        writeln!(writer,"max: {}", max)?;
+        writeln!(writer, "sum: {:.2}", sum)?;
+        writeln!(writer,"min: {:.2}", min)?;
+        writeln!(writer,"max: {:.2}", max)?;
         self.inner.display_statistics(writer)?;
         Ok(())
     }
@@ -75,28 +75,117 @@ mod tests {
     #[test]
     fn test_with_mean_statistics_logger_display() {
         let exec_times_base_stats = ExecutionTimesBaseStatistics::new(vec![10.0, 20.0]);
-        let mean_stats_logger = WithMeanStatisticsLogger::new(exec_times_base_stats);
+        let mean_stats_logger = WithMeanStatisticsLogger::new(exec_times_base_stats.clone());
         let mut buffer = Vec::new();
 
         mean_stats_logger.display_statistics(&mut buffer).unwrap();
 
         let output = String::from_utf8(buffer).unwrap();
 
-        assert!(output.contains("avg: 15"));
-        assert!(output.contains("15.0"));
+
+        assert!(output.contains("avg: 15.0"));
+        assert!(output.contains("20.0"));
+        assert!(output.contains("10.0"));
+    }
+
+    //czy program nie zrobi panica
+    #[test]
+    fn test_with_mean_statistics_logger_display_empty() {
+        let exec_times_base_stats = ExecutionTimesBaseStatistics::new(vec![]);
+        let mean_stats_logger = WithMeanStatisticsLogger::new(exec_times_base_stats.clone());
+        let mut buffer = Vec::new();
+
+        mean_stats_logger.display_statistics(&mut buffer).unwrap();
+
+    }
+
+    #[test]
+    fn test_with_mean_statistics_logger_get(){
+        let exec_times_base_stats = ExecutionTimesBaseStatistics::new(vec![10.0, 20.0]);
+        let mean_stats_logger = WithMeanStatisticsLogger::new(exec_times_base_stats.clone());
+
+        assert!(exec_times_base_stats.get_execution_times() == mean_stats_logger.get_execution_times())
+    }
+
+    //summary stats tests
+    #[test]
+    fn test_with_summary_statistics_logger_display() {
+        let exec_times_base_stats = ExecutionTimesBaseStatistics::new(vec![10.0, 20.0]);
+        let summary_stats_logger = WithSummaryStatisticsLogger::new(exec_times_base_stats.clone());
+        let mut buffer = Vec::new();
+
+        summary_stats_logger.display_statistics(&mut buffer).unwrap();
+
+        let output = String::from_utf8(buffer).unwrap();
+
+
+        assert!(output.contains("records: 2"));
+        assert!(output.contains("sum: 30.0"));
+        assert!(output.contains("min: 10.0"));
+        assert!(output.contains("max: 20.0"));
+        assert!(output.contains("20.0"));
+        assert!(output.contains("10.0"));
+    }
+
+    //czy program nie zrobi panica
+    #[test]
+    fn test_with_summary_statistics_logger_display_empty() {
+        let exec_times_base_stats = ExecutionTimesBaseStatistics::new(vec![]);
+        let summary_stats_logger = WithSummaryStatisticsLogger::new(exec_times_base_stats.clone());
+        let mut buffer = Vec::new();
+
+        summary_stats_logger.display_statistics(&mut buffer).unwrap();
+    }
+
+    #[test]
+    fn test_with_summary_statistics_logger_get(){
+        let exec_times_base_stats = ExecutionTimesBaseStatistics::new(vec![10.0, 20.0]);
+        let summary_stats_logger = WithSummaryStatisticsLogger::new(exec_times_base_stats.clone());
+
+        assert!(exec_times_base_stats.get_execution_times() == summary_stats_logger.get_execution_times())
+    }
+
+    #[test]
+    fn test_double_logger_display(){
+        let exec_times_base_stats = ExecutionTimesBaseStatistics::new(vec![10.0, 20.0]);
+        let summary_stats_logger = WithSummaryStatisticsLogger::new(exec_times_base_stats.clone());
+        let mean_stats_logger = WithMeanStatisticsLogger::new(summary_stats_logger.clone());
+
+        let mut buffer = Vec::new();
+
+        mean_stats_logger.display_statistics(&mut buffer).unwrap();
+
+        let output = String::from_utf8(buffer).unwrap();
+
+
+        assert!(output.contains("avg: 15.0"));
+        assert!(output.contains("20.0"));
+        assert!(output.contains("10.0"));
+        assert!(output.contains("records: 2"));
+        assert!(output.contains("sum: 30.0"));
+        assert!(output.contains("min: 10.0"));
+        assert!(output.contains("max: 20.0"));
+        assert!(output.contains("20.0"));
         assert!(output.contains("10.0"));
     }
 
     #[test]
-    fn test_with_mean_statistics_logger_display_empty() {
+    fn test_double_logger_display_empty(){
         let exec_times_base_stats = ExecutionTimesBaseStatistics::new(vec![10.0, 20.0]);
-        let mean_stats_logger = WithMeanStatisticsLogger::new(exec_times_base_stats);
+        let summary_stats_logger = WithSummaryStatisticsLogger::new(exec_times_base_stats.clone());
+        let mean_stats_logger = WithMeanStatisticsLogger::new(summary_stats_logger.clone());
+
         let mut buffer = Vec::new();
 
-        mean_stats_logger.display_statistics(&mut buffer);
+        mean_stats_logger.display_statistics(&mut buffer).unwrap();
+    }
 
-        let output = String::from_utf8(buffer).unwrap();
+    #[test]
+    fn test_double_logger_get(){
+        let exec_times_base_stats = ExecutionTimesBaseStatistics::new(vec![10.0, 20.0]);
+        let summary_stats_logger = WithSummaryStatisticsLogger::new(exec_times_base_stats.clone());
+        let mean_stats_logger = WithMeanStatisticsLogger::new(summary_stats_logger.clone());
 
-        assert!(!output.contains("avg"))
+        assert!(exec_times_base_stats.get_execution_times() == mean_stats_logger.get_execution_times())
     }
 }

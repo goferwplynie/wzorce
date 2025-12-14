@@ -21,7 +21,9 @@ impl ExecutionTimesBaseStatistics {
 impl StatisticsLogger for ExecutionTimesBaseStatistics {
     fn display_statistics(&self, writer: &mut dyn Write) -> std::io::Result<()> {
         writeln!(writer, "----Execution times base statistics----")?;
-        writeln!(writer, "{:#?}", self.execution_times)?;
+        for record in self.execution_times.clone(){
+            writeln!(writer, "{:.2}", record)?;
+        }
         Ok(())
     }
 
